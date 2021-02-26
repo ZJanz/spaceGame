@@ -60,6 +60,7 @@ class GameInstance {
             for (let i = 0; i < cmd.commands.length; i++) {
                 const command = cmd.commands[i]
                 const entity = client.entity
+                const movement = new THREE.Object3D()
 
 
 
@@ -87,32 +88,25 @@ class GameInstance {
                 entity.rotationY = command.rotationY
                 entity.rotationZ = command.rotationZ
 
+                movement.rotation.x = command.rotationX
+                movement.rotation.y = command.rotationY
+                movement.rotation.z = command.rotationZ
+
+
                 entity.direction.z = Number( entity.moveForward ) - Number( entity.moveBackward );
                 entity.direction.x = Number( entity.moveRight ) - Number( entity.moveLeft );
                 entity.direction.y = Number( entity.moveUp ) - Number(entity.moveDown);
                 entity.direction.normalize(); // this ensures consistent movements in all directions
-
-                // if ( entity.moveForward || entity.moveBackward ) entity.velocity.z -= entity.direction.z * 400.0 * delta;
-                // if ( entity.moveLeft || entity.moveRight ) entity.velocity.x -= entity.direction.x * 400.0 * delta;
-                // if ( entity.moveUp || entity.moveDown ) entity.velocity.y -= entity.direction.y * 400.0 * delta;
-
-                if ( entity.moveForward || entity.moveBackward ) {entity.velocity.z = entity.direction.z * 400.0 * delta} else entity.velocity.z = 0;
-                if ( entity.moveLeft || entity.moveRight ) {entity.velocity.x = entity.direction.x * 400.0 * delta} else entity.velocity.x = 0;
-                if ( entity.moveUp || entity.moveDown ) {entity.velocity.y = entity.direction.y * 400.0 * delta} else entity.velocity.y = 0;
-
-                let cube = new THREE.Object3D()
-
-                cube.rotation.x = entity.rotationX
-                cube.rotation.y = entity.rotationY
-                cube.rotation.z = entity.rotationZ
             
-                cube.translateX(entity.velocity.x * command.delta)
-                cube.translateY(entity.velocity.y * command.delta)
-                cube.translateZ(-entity.velocity.z * command.delta)
+                movement.translateX(entity.direction.x * 40 * command.delta)
+                movement.translateY(entity.direction.y * 40 * command.delta)
+                movement.translateZ(-entity.direction.z * 40 * command.delta)
+
+                entity.x += movement.position.x
+                entity.y += movement.position.y
+                entity.z += movement.position.z
+
             
-                entity.x += cube.position.x
-                entity.y += cube.position.y
-                entity.z += cube.position.z
 
             }
             
