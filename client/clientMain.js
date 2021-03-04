@@ -9,6 +9,7 @@ import nengiConfig from '../common/nengiConfig'
 import TestCommand from '../common/command/TestCommand'
 import PlayerInput from '../common/command/PlayerInput'
 
+
 import {
     Euler,
     EventDispatcher,
@@ -261,37 +262,67 @@ class GameClient {
 
         network.entities.forEach(snapshot => {
             snapshot.createEntities.forEach(entity => {
-                console.log('create a new entity', entity)
-                const threeCube = new THREE.Mesh(
-                    new THREE.BoxGeometry(2,2,2),
-                    
-                    new THREE.MeshBasicMaterial( {color: 0x00ffff} )
-                )
+                console.log('create a new entity', entity.protocol.name)
+
+                if(entity.protocol.name === "PlayerCharacter"){
+	                const threeCube = new THREE.Mesh(
+	                    new THREE.BoxGeometry(2,2,2),
+	                    
+	                    new THREE.MeshBasicMaterial( {color: 0x00ffff} )
+
+	                )
+	                const { nid, x, y, z, rotationX, rotationY, rotationZ } = entity
+	                threeCube.nid = entity.nid // may as well add this
+	                threeCube.position.x = x
+	                threeCube.position.y = y
+	                threeCube.position.z = z
+
+	               
+	                threeCube.rotation.x = rotationX
+	                threeCube.rotation.y = rotationY
+	                threeCube.rotation.z = rotationZ
+
+	                if(threeCube.nid != gameState.myId ){
+	                    scene.add(threeCube)
+	                    entities.set(nid, threeCube)
+	                }
+	            }
+
+                if(entity.protocol.name === "Bullet"){
+                	const threeBullet = new THREE.Mesh(
+	                	
+	                   	new THREE.SphereGeometry(1, 1, 1),
+						new THREE.MeshBasicMaterial ({color: 0xff11ff})
+
+
+	                )
+                	const { nid, x, y, z, rotationX, rotationY, rotationZ } = entity
+	                threeBullet.position.x = x
+	                threeBullet.position.y = y
+	                threeBullet.position.z = z
+
+	                threeBullet.name = "bullet"
+
+	               
+	                threeBullet.rotation.x = rotationX
+	                threeBullet.rotation.y = rotationY
+	                threeBullet.rotation.z = rotationZ
+	                scene.add(threeBullet)
+
+
+	                entities.set(nid, threeBullet)
+                }
                 
-                const { nid, x, y, z, rotationX, rotationY, rotationZ } = entity
-                threeCube.nid = entity.nid // may as well add this
-                threeCube.position.x = x
-                threeCube.position.y = y
-                threeCube.position.z = z
-
-               
-                threeCube.rotation.x = rotationX
-                threeCube.rotation.y = rotationY
-                threeCube.rotation.z = rotationZ
-
-                // if(threeCube.nid != gameState.myId ){
-                    scene.add(threeCube)
-                    entities.set(nid, threeCube)
-                // }
 
             })
     
             snapshot.updateEntities.forEach(update => {
                 // console.log('update something about an existing entity', update)
                 const entity = entities.get(update.nid) // note this is threeCube now
-                // console.log(entity)
+                
+                // console.log(updat)
                 if (update.nid === gameState.myId){
-                    console.log("got my own ID!") 
+                    scene.remove(entities.get(gameState.myId))
                     return
                 }
 
@@ -310,6 +341,7 @@ class GameClient {
 
                 }
                 if (update.prop === 'z') {
+                	// console.log(entity)
                     entity.position.z = update.value
                     // if (update.nid === gameState.myId){
                     //     camera.position.z = update.value
@@ -355,6 +387,11 @@ class GameClient {
             if(message.protocol.name === "Identity"){
                 gameState.myId = message.entityId
             } 
+            if(message.protocol.name === "Death"){
+                camera.position.x = message.x;
+                camera.position.y = message.y;
+                camera.position.z = message.z;
+            } 
         })
 
         network.localMessages.forEach(localMessage => {
@@ -383,6 +420,7 @@ class GameClient {
     let moveRight = false;
     let moveUp = false;
     let moveDown = false;
+    let shoot = false;
     let rollLeft = false;
     let rollRight = false;
 
@@ -481,6 +519,16 @@ function init(){
     } );
 
     scene.add(controls.getObject())
+    const onMouseDown = function ( event ){
+        shoot = true
+        
+    }
+
+    const onMouseUp = function ( event ){
+        shoot = false
+        
+
+    }
 
     const onKeyDown = function ( event ) {
                 
@@ -607,6 +655,9 @@ function init(){
 
     document.addEventListener( 'keydown', onKeyDown );
     document.addEventListener( 'keyup', onKeyUp );
+    document.addEventListener('mousedown', onMouseDown)
+    document.addEventListener('mouseup', onMouseUp)
+
 
     renderer = new THREE.WebGLRenderer({antialias:true, canvas:canvas});
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -667,7 +718,7 @@ function animate(){
 
             // console.log(camera.rotation.x)
 
-            const command = new PlayerInput(moveForward, moveBackward, moveLeft, moveRight, moveUp, moveDown, camera.rotation.x, camera.rotation.y, camera.rotation.z, delta)
+            const command = new PlayerInput(moveForward, moveBackward, moveLeft, moveRight, moveUp, moveDown, shoot, camera.rotation.x, camera.rotation.y, camera.rotation.z, delta)
 
             gameClient.client.addCommand(command)
             // const intersections = raycaster.intersectObjects( objects );
