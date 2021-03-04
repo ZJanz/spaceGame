@@ -4,8 +4,12 @@ import TestEntity from './entity/TestEntity'
 import TestCommand from './command/TestCommand'
 import NetLog from './message/NetLog.js'
 import PlayerCharacter from './entity/PlayerCharacter.js'
+import Bullet from './entity/Bullet.js'
+
 import PlayerInput from './command/PlayerInput'
 import Identity from './message/Identity.js'
+import Death from './message/Death.js'
+
 
 const config = {
     UPDATE_RATE: 20, 
@@ -22,7 +26,9 @@ const config = {
     protocols: {
         entities: [
             ['TestEntity', TestEntity],
-            ['PlayerCharacter', PlayerCharacter]
+            ['PlayerCharacter', PlayerCharacter],
+            ['Bullet', Bullet]
+
         ],
         localMessages: [],
         messages: [
@@ -30,6 +36,7 @@ const config = {
             ['NetLog', NetLog],
             ['PlayerCharacter', PlayerCharacter],
             ['Identity', Identity],
+            ['Death', Death]
 
         ],
         commands: [
