@@ -2,14 +2,19 @@ import nengi from 'nengi'
 import nengiConfig from '../common/nengiConfig'
 import TestEntity from '../common/entity/TestEntity'
 import PlayerCharacter from '../common/entity/PlayerCharacter'
+import Bullet from '../common/entity/Bullet'
 
 import NetLog from '../common/message/NetLog.js'
 import Identity from '../common/message/Identity.js'
+import Death from '../common/message/Death.js'
+
+// import { Ray } from "three/examples/jsm/math/Ray.js"
 
 import * as THREE from 'three/build/three.module.js'
 
 
 const entities = new Map()
+const bullets = new Map()
 const speed = 1
 
 
@@ -22,20 +27,21 @@ class GameInstance {
             // const entity = new TestEntity()
             const entity = new PlayerCharacter()
 
+
             this.instance.addEntity(entity)
             this.instance.message(new Identity(entity.nid), client)
 
             this.instance.message(new NetLog('hello world'), client)
-
+            this.players.set(entity.nid, client)
             client.entity = entity
 
             client.view = {
                 x: 0,
                 y: 0,
                 z: 0,
-                halfWidth: 99999,
-                halfHeight: 99999,
-                halfDepth: 99999
+                halfWidth: 999999,
+                halfHeight: 999999,
+                halfDepth: 999999
 
             }
 
@@ -64,7 +70,7 @@ class GameInstance {
 
 
 
-                // console.log(command)
+                
                 if (command.moveForward) {
                     entity.moveForward = true
                 } else { entity.moveForward = false }
@@ -83,10 +89,19 @@ class GameInstance {
                 if (command.moveDown) {
                     entity.moveDown = true
                 } else {entity.moveDown = false}
+                if (command.shoot) {
+                    entity.shoot = true
+                } else {entity.shoot = false}
+
 
                 entity.rotationX = command.rotationX
                 entity.rotationY = command.rotationY
                 entity.rotationZ = command.rotationZ
+
+                entity.obj.rotation.x = entity.rotationX
+                entity.obj.rotation.y = entity.rotationY
+                entity.obj.rotation.z = entity.rotationZ
+
 
                 movement.rotation.x = command.rotationX
                 movement.rotation.y = command.rotationY
@@ -106,6 +121,20 @@ class GameInstance {
                 entity.y += movement.position.y
                 entity.z += movement.position.z
 
+                entity.obj.position.x = entity.x
+                entity.obj.position.y = entity.y
+                entity.obj.position.z = entity.z
+
+                entity.obb.center.set(entity.x, entity.y, entity.z)
+                entity.obj.updateMatrix()
+                entity.obj.updateMatrixWorld()
+
+                entity.obb.applyMatrix4(entity.obj.matrix)
+
+                // console.log(entity.obb)
+                
+
+                
             
 
             }
@@ -114,8 +143,105 @@ class GameInstance {
         }
 
         entities.forEach(entity => {
-           
+            if(entity.shoot === true){
+
+
+
+                const bullet = new Bullet()
+
+                
+
+                this.instance.addEntity(bullet)
+
+
+
+                bullets.set(bullet.nid, bullet)
+
+                bullet.rotationX = entity.rotationX
+                bullet.rotationY = entity.rotationY
+                bullet.rotationZ = entity.rotationZ
+
+                bullet.id = entity.nid
+                bullet.x = entity.x
+                bullet.y = entity.y
+                bullet.z = entity.z
+                bullet.obj.position.x = bullet.x;
+                bullet.obj.position.y = bullet.y;
+                bullet.obj.position.z = bullet.z;
+                bullet.obj.rotation.x = bullet.rotationX;
+                bullet.obj.rotation.y = bullet.rotationY;
+                bullet.obj.rotation.z = bullet.rotationZ;
+
+                bullet.obb.center.set(bullet.x, bullet.y, bullet.z)
+
+                bullet.obb.applyMatrix4(bullet.obj.matrix)
+
+                
+            }
+               
+        })
+        
+        bullets.forEach(bullet => {
+            const movement = new THREE.Object3D()
             
+            bullet.time += (delta)
+
+            movement.rotation.x = bullet.rotationX
+            movement.rotation.y = bullet.rotationY
+            movement.rotation.z = bullet.rotationZ
+            movement.translateZ(-4*40*delta)
+            
+            bullet.x += movement.position.x
+            bullet.y += movement.position.y
+            bullet.z += movement.position.z
+
+            bullet.obj.position.x = bullet.x;
+            bullet.obj.position.y = bullet.y;
+            bullet.obj.position.z = bullet.z;
+            bullet.obj.rotation.x = bullet.rotationX;
+            bullet.obj.rotation.y = bullet.rotationY;
+            bullet.obj.rotation.z = bullet.rotationZ;
+
+            bullet.obb.center.set(bullet.x, bullet.y, bullet.z)
+            bullet.obj.updateMatrix()
+            bullet.obj.updateMatrixWorld()
+
+            bullet.obb.applyMatrix4(bullet.obj.matrix)
+
+            // console.log(bullet.obb)
+
+            if(bullet.time > 2){
+                bullets.delete(bullet.nid)
+                this.instance.removeEntity(bullet)
+            }
+
+            entities.forEach(entity => {
+                if(bullet.obb.intersectsOBB(entity.obb) && bullet.id != entity.nid){
+                    
+                    if(bullet.nid != -1){
+                        bullets.delete(bullet.nid)
+                        this.instance.removeEntity(bullet)
+                        entity.x = Math.random() * 100 - 50;
+                        entity.y = Math.random() * 100 - 50;
+                        entity.z = Math.random() * 100 - 50;
+                        entity.obj.position.x = entity.x
+                        entity.obj.position.y = entity.y
+                        entity.obj.position.z = entity.z
+
+                        entity.obb.center.set(entity.x, entity.y, entity.z)
+                        entity.obj.updateMatrix()
+                        entity.obj.updateMatrixWorld()
+
+                        entity.obb.applyMatrix4(entity.obj.matrix)
+                        // this.instance.message(new NetLog('hello world'), client)
+
+                        this.instance.message(new NetLog("Got wrecked"), this.players.get(entity.nid))
+                        this.instance.message(new Death(entity.x, entity.y, entity.z), this.players.get(entity.nid))
+
+
+                    }
+                }
+            })
         })
 
 
