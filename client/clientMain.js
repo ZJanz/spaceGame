@@ -228,7 +228,7 @@ class GameClient {
             console.log('connection closed')
         })
 
-        this.client.connect('ws://localhost:8079')       
+        this.client.connect('wss://zachgames.com/test')       
     }
 
     update(delta, tick, now) {
