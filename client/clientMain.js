@@ -8,6 +8,7 @@ import nengi from 'nengi'
 import nengiConfig from '../common/nengiConfig'
 import TestCommand from '../common/command/TestCommand'
 import PlayerInput from '../common/command/PlayerInput'
+import SpaceControl from '../common/command/SpaceControl'
 
 
 import {
@@ -215,32 +216,6 @@ PointerLockControls.prototype.constructor = PointerLockControls;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class GameClient {
     constructor() {
         this.client = new nengi.Client(nengiConfig, 100) 
@@ -288,10 +263,34 @@ class GameClient {
 	                }
 	            }
 
+	            if(entity.protocol.name === "Ship"){
+	                const threeCube = new THREE.Mesh(
+	                    new THREE.BoxGeometry(10,1,10),
+	                    
+	                    new THREE.MeshBasicMaterial( {color: 0xff00ff} )
+
+	                )
+	                const { nid, x, y, z, rotationX, rotationY, rotationZ } = entity
+	                threeCube.nid = entity.nid // may as well add this
+	                threeCube.position.x = x
+	                threeCube.position.y = y
+	                threeCube.position.z = z
+
+	               
+	                threeCube.rotation.x = rotationX
+	                threeCube.rotation.y = rotationY
+	                threeCube.rotation.z = rotationZ
+
+	                if(threeCube.nid != gameState.myId ){
+	                    scene.add(threeCube)
+	                    entities.set(nid, threeCube)
+	                }
+	            }
+
                 if(entity.protocol.name === "Bullet"){
                 	const threeBullet = new THREE.Mesh(
 	                	
-	                   	new THREE.SphereGeometry(1, 1, 1),
+	                   	new THREE.SphereGeometry(1, 16, 16),
 						new THREE.MeshBasicMaterial ({color: 0xff11ff})
 
 
@@ -578,19 +577,17 @@ function init(){
                         
                         break;
                     case 'KeyL':
-                        space = false
-                        let distanceX = camera.position.x-floor.position.x
-                        let distanceY = camera.position.y-floor.position.y
-                        let distanceZ = camera.position.z-floor.position.z
+                    	console.log("KeyL pressed")
+                    	if(space === true){
+                    		space = false
+                    		const command = new SpaceControl(space)
 
-                        floor.add(camera)
-                        camera.position.x = distanceX
-                        camera.position.y = distanceY
-                        camera.position.z = distanceZ
+	            			gameClient.client.addCommand(command)
+	                        exitSpace()
+	                        
+                    	}
 
-                        camera.rotation.x = floor.rotation.x
-                        camera.rotation.y = floor.rotation.y
-                        camera.rotation.z = floor.rotation.z
+                    	
                         break;
                     
 
@@ -728,14 +725,14 @@ function animate(){
             const predictCamera = camera
 
             move(camera, command)
-            // const prediction = {
-            //     nid: gameState.myId,
-            //     x: predictCamera.position.x,
-            //     y: predictCamera.position.y,
-            //     z: predictCamera.position.z
-            // }
+            const prediction = {
+                nid: gameState.myId,
+                x: predictCamera.position.x,
+                y: predictCamera.position.y,
+                z: predictCamera.position.z
+            }
             
-            // gameClient.client.addCustomPrediction(gameClient.client.tick, prediction, ['x', 'y', 'z'])
+            gameClient.client.addCustomPrediction(gameClient.client.tick, prediction, ['x', 'y', 'z'])
 
 
 
@@ -847,6 +844,21 @@ function onWindowResize(){
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+function exitSpace() {
+	let distanceX = camera.position.x-floor.position.x
+    let distanceY = camera.position.y-floor.position.y
+    let distanceZ = camera.position.z-floor.position.z
+
+    floor.add(camera)
+    camera.position.x = distanceX
+    camera.position.y = distanceY
+    camera.position.z = distanceZ
+
+    camera.rotation.x = floor.rotation.x
+    camera.rotation.y = floor.rotation.y
+    camera.rotation.z = floor.rotation.z
+}
+
 function move(entity, command){
     
        const movement = new THREE.Object3D()
@@ -893,6 +905,7 @@ function move(entity, command){
         entity.position.x += movement.position.x
         entity.position.y += movement.position.y
         entity.position.z += movement.position.z
+
 
 }
 
