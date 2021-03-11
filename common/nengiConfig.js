@@ -5,8 +5,12 @@ import TestCommand from './command/TestCommand'
 import NetLog from './message/NetLog.js'
 import PlayerCharacter from './entity/PlayerCharacter.js'
 import Bullet from './entity/Bullet.js'
+import Ship from './entity/Ship.js'
+
 
 import PlayerInput from './command/PlayerInput'
+import SpaceControl from './command/SpaceControl'
+
 import Identity from './message/Identity.js'
 import Death from './message/Death.js'
 
@@ -27,6 +31,8 @@ const config = {
         entities: [
             ['TestEntity', TestEntity],
             ['PlayerCharacter', PlayerCharacter],
+            ['Ship', Ship],
+
             ['Bullet', Bullet]
 
         ],
@@ -41,7 +47,8 @@ const config = {
         ],
         commands: [
             ['TestCommand', TestCommand],
-            ['PlayerInput', PlayerInput]
+            ['PlayerInput', PlayerInput],
+            ['SpaceControl', SpaceControl],
         ],
         basics: []
     }
