@@ -17,6 +17,8 @@ import * as THREE from 'three/build/three.module.js'
 
 const entities = new Map()
 const bullets = new Map()
+const ships = new Map()
+
 const speed = 1
 
 
@@ -31,10 +33,13 @@ class GameInstance {
                 const entity = new PlayerCharacter()
 
                 const ship = new Ship()
+                
+                // console.log(ships.get(ship.nid))
 
 
                 this.instance.addEntity(entity)
                 this.instance.addEntity(ship)
+                ships.set(ship.nid, ship)
 
                 this.instance.message(new Identity(entity.nid), client)
 
@@ -51,8 +56,10 @@ class GameInstance {
                     halfDepth: 999999
 
                 }
-
+                entity.obj.add(ship.obj)
                 entities.set(entity.nid, entity)
+
+
 
 
                 callback({ accepted: true, text: 'Welcome!' })
@@ -111,13 +118,13 @@ class GameInstance {
                         } else {entity.shoot = false}
 
 
-                        entity.rotationX = command.rotationX
-                        entity.rotationY = command.rotationY
-                        entity.rotationZ = command.rotationZ
+                        // entity.rotationX = command.rotationX
+                        // entity.rotationY = command.rotationY
+                        // entity.rotationZ = command.rotationZ
 
-                        entity.obj.rotation.x = entity.rotationX
-                        entity.obj.rotation.y = entity.rotationY
-                        entity.obj.rotation.z = entity.rotationZ
+                        entity.obj.rotation.x = command.rotationX
+                        entity.obj.rotation.y = command.rotationY
+                        entity.obj.rotation.z = command.rotationZ
 
 
                         movement.rotation.x = command.rotationX
@@ -134,13 +141,9 @@ class GameInstance {
                         movement.translateY(entity.direction.y * 40 * command.delta)
                         movement.translateZ(-entity.direction.z * 40 * command.delta)
 
-                        entity.x += movement.position.x
-                        entity.y += movement.position.y
-                        entity.z += movement.position.z
-
-                        entity.obj.position.x = entity.x
-                        entity.obj.position.y = entity.y
-                        entity.obj.position.z = entity.z
+                        entity.obj.position.x += movement.position.x
+                        entity.obj.position.y += movement.position.y
+                        entity.obj.position.z += movement.position.z
 
                         entity.obb.center.set(entity.x, entity.y, entity.z)
                         entity.obj.updateMatrix()
@@ -149,6 +152,24 @@ class GameInstance {
                         entity.obb.applyMatrix4(entity.obj.matrix)
 
                     // console.log(entity.obb)
+                    }
+                    if(command.protocol.name === "SpaceControl"){
+
+                        if(command.space === false){
+                            let shortestDistance = 99999999;
+                            let nearestShip;
+                            
+                            ships.forEach(ship => { 
+                                const distanceToShip = entity.obj.position.distanceTo(ship.obj.position)
+                                if(distanceToShip < shortestDistance){
+                                    shortestDistance = distanceToShip;
+                                    nearestShip = ship.nid;
+                                }
+                            })
+                            ships.get(nearestShip).obj.add(entity.obj)
+                            console.log(ships.get(nearestShip))
+                            
+                        }
                     } 
                 }   
                 catch(err) {
@@ -176,9 +197,9 @@ class GameInstance {
 
                 bullets.set(bullet.nid, bullet)
 
-                bullet.rotationX = entity.rotationX
-                bullet.rotationY = entity.rotationY
-                bullet.rotationZ = entity.rotationZ
+                bullet.rotationX = entity.obj.rotation.x
+                bullet.rotationY = entity.obj.rotation.y
+                bullet.rotationZ = entity.obj.rotation.z
 
                 bullet.id = entity.nid
                 bullet.x = entity.x
@@ -198,6 +219,9 @@ class GameInstance {
                 
             }
                
+        })
+        ships.forEach(ship => {
+            
         })
         
         bullets.forEach(bullet => {
@@ -240,14 +264,12 @@ class GameInstance {
                         if(bullet.nid != -1){
                             bullets.delete(bullet.nid)
                             this.instance.removeEntity(bullet)
-                            entity.x = Math.random() * 100 - 50;
-                            entity.y = Math.random() * 100 - 50;
-                            entity.z = Math.random() * 100 - 50;
-                            entity.obj.position.x = entity.x
-                            entity.obj.position.y = entity.y
-                            entity.obj.position.z = entity.z
+                            entity.obj.position.x = Math.random() * 100 - 50;
+                            entity.obj.position.y = Math.random() * 100 - 50;
+                            entity.obj.position.z = Math.random() * 100 - 50;
+                            
 
-                            entity.obb.center.set(entity.x, entity.y, entity.z)
+                            entity.obb.center.set(entity.obj.position.x, entity.obj.position.y, entity.obj.position.z)
                             entity.obj.updateMatrix()
                             entity.obj.updateMatrixWorld()
 
