@@ -6,6 +6,8 @@ import NetLog from './message/NetLog.js'
 import PlayerCharacter from './entity/PlayerCharacter.js'
 import Bullet from './entity/Bullet.js'
 import Ship from './entity/Ship.js'
+import ShipWall from './entity/ShipWall.js'
+
 
 
 import PlayerInput from './command/PlayerInput'
@@ -32,6 +34,7 @@ const config = {
             ['TestEntity', TestEntity],
             ['PlayerCharacter', PlayerCharacter],
             ['Ship', Ship],
+            ['ShipWall', ShipWall],
 
             ['Bullet', Bullet]
 
