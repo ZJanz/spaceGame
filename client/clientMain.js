@@ -228,7 +228,7 @@ class GameClient {
             console.log('connection closed')
         })
 
-        this.client.connect('wss://zachgames.com/test')       
+        this.client.connect('ws://localhost:8079')       
     }
 
     update(delta, tick, now) {
@@ -248,24 +248,27 @@ class GameClient {
 	                )
 	                const { nid, x, y, z, rotationX, rotationY, rotationZ } = entity
 	                threeCube.nid = entity.nid // may as well add this
-	                threeCube.position.x = x
-	                threeCube.position.y = y
-	                threeCube.position.z = z
-
-	               
-	                threeCube.rotation.x = rotationX
-	                threeCube.rotation.y = rotationY
-	                threeCube.rotation.z = rotationZ
+	                
 
 	                if(threeCube.nid != gameState.myId ){
+	                	threeCube.position.x = x
+		                threeCube.position.y = y
+		                threeCube.position.z = z
+
+		               
+		                threeCube.rotation.x = rotationX
+		                threeCube.rotation.y = rotationY
+		                threeCube.rotation.z = rotationZ
 	                    scene.add(threeCube)
+
 	                    entities.set(nid, threeCube)
 	                }
 	            }
 
 	            if(entity.protocol.name === "Ship"){
+	            	console.log(entity)
 	                const threeCube = new THREE.Mesh(
-	                    new THREE.BoxGeometry(10,1,10),
+	                    new THREE.BoxGeometry(entity.obb.halfSize.x * 2, entity.obb.halfSize.y*2, entity.obb.halfSize.z*2),
 	                    
 	                    new THREE.MeshBasicMaterial( {color: 0xff00ff} )
 
@@ -280,11 +283,9 @@ class GameClient {
 	                threeCube.rotation.x = rotationX
 	                threeCube.rotation.y = rotationY
 	                threeCube.rotation.z = rotationZ
-
-	                if(threeCube.nid != gameState.myId ){
-	                    scene.add(threeCube)
-	                    entities.set(nid, threeCube)
-	                }
+                    scene.add(threeCube)
+                    
+                    entities.set(nid, threeCube)
 	            }
 
                 if(entity.protocol.name === "Bullet"){
@@ -318,7 +319,7 @@ class GameClient {
             snapshot.updateEntities.forEach(update => {
                 // console.log('update something about an existing entity', update)
                 const entity = entities.get(update.nid) // note this is threeCube now
-                
+                console.log(entity)
                 // console.log(updat)
                 if (update.nid === gameState.myId){
                     scene.remove(entities.get(gameState.myId))
@@ -583,7 +584,7 @@ function init(){
                     		const command = new SpaceControl(space)
 
 	            			gameClient.client.addCommand(command)
-	                        exitSpace()
+	                        // exitSpace()
 	                        
                     	}
 
