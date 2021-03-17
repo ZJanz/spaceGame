@@ -56,7 +56,7 @@ class GameInstance {
                     halfDepth: 999999
 
                 }
-                entity.obj.add(ship.obj)
+                // entity.obj.add(ship.obj)
                 entities.set(entity.nid, entity)
 
 
@@ -167,7 +167,7 @@ class GameInstance {
                                 }
                             })
                             ships.get(nearestShip).obj.add(entity.obj)
-                            console.log(ships.get(nearestShip))
+                            // console.log(ships.get(nearestShip))
                             
                         }
                     } 
@@ -221,7 +221,7 @@ class GameInstance {
                
         })
         ships.forEach(ship => {
-            
+            ship.obj.position.x += 1
         })
         
         bullets.forEach(bullet => {
