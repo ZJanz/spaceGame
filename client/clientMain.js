@@ -284,6 +284,7 @@ class GameClient {
 	                threeCube.rotation.y = rotationY
 	                threeCube.rotation.z = rotationZ
                     scene.add(threeCube)
+                    ships.set(nid, threeCube)
                     
                     entities.set(nid, threeCube)
 	            }
@@ -319,7 +320,7 @@ class GameClient {
             snapshot.updateEntities.forEach(update => {
                 // console.log('update something about an existing entity', update)
                 const entity = entities.get(update.nid) // note this is threeCube now
-                console.log(entity)
+                // console.log(entity)
                 // console.log(updat)
                 if (update.nid === gameState.myId){
                     scene.remove(entities.get(gameState.myId))
@@ -412,6 +413,7 @@ class GameClient {
     const gameClient = new GameClient()
     let scene, camera, renderer, controls, cube, canvas, floor;
     const entities = new Map()
+    const ships = new Map()
     let raycaster;
     let prevTime = performance.now();
     let moveForward = false;
@@ -584,7 +586,7 @@ function init(){
                     		const command = new SpaceControl(space)
 
 	            			gameClient.client.addCommand(command)
-	                        // exitSpace()
+	                        exitSpace()
 	                        
                     	}
 
@@ -846,18 +848,17 @@ function onWindowResize(){
 }
 
 function exitSpace() {
-	let distanceX = camera.position.x-floor.position.x
-    let distanceY = camera.position.y-floor.position.y
-    let distanceZ = camera.position.z-floor.position.z
-
-    floor.add(camera)
-    camera.position.x = distanceX
-    camera.position.y = distanceY
-    camera.position.z = distanceZ
-
-    camera.rotation.x = floor.rotation.x
-    camera.rotation.y = floor.rotation.y
-    camera.rotation.z = floor.rotation.z
+	let shortestDistance = 99999999;
+    let nearestShip;
+    
+    ships.forEach(ship => { 
+        const distanceToShip = camera.position.distanceTo(ship.position)
+        if(distanceToShip < shortestDistance){
+            shortestDistance = distanceToShip;
+            nearestShip = ship.nid;
+        }
+    })
+    ships.get(nearestShip).add(camera)
 }
 
 function move(entity, command){
