@@ -57,13 +57,33 @@ class PlayerCharacter {
     }  
 
     get rotationX() {
-        return this.obj.rotation.x
+        const worldQuaternion = new THREE.Quaternion();
+        this.obj.getWorldQuaternion(worldQuaternion)
+        const worldRotation = new THREE.Euler().setFromQuaternion(worldQuaternion)
+        return worldRotation.x
     }
     get rotationY() {
-        return this.obj.rotation.y
+        const worldQuaternion = new THREE.Quaternion();
+        this.obj.getWorldQuaternion(worldQuaternion)
+        const worldRotation = new THREE.Euler().setFromQuaternion(worldQuaternion)
+        return worldRotation.y
     }
     get rotationZ() {
-        return this.obj.rotation.z
+        const worldQuaternion = new THREE.Quaternion();
+        this.obj.getWorldQuaternion(worldQuaternion)
+        const worldRotation = new THREE.Euler().setFromQuaternion(worldQuaternion)
+        return worldRotation.z
+    }
+    get localPositionX() {
+        return this.obj.position.x
+    }
+    get localPositionY() {
+        return this.obj.position.y
+        
+    }
+    get localPositionZ() {
+        return this.obj.position.z
+        
     }
 }
 
@@ -71,6 +91,10 @@ PlayerCharacter.protocol = {
     x: { type: nengi.Number, interp: true },
     y: { type: nengi.Number, interp: true },
     z: { type: nengi.Number, interp: true },
+    localPositionX : { type: nengi.Number },
+    localPositionY : { type: nengi.Number },
+    localPositionZ : { type: nengi.Number },
+
     rotationX : { type: nengi.Number },
     rotationY : { type: nengi.Number },
     rotationZ : { type: nengi.Number },
