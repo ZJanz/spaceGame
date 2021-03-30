@@ -1,13 +1,10 @@
 import nengi from 'nengi'
 
 class PlayerInput {
-    constructor(moveForward, moveBackward, moveLeft, moveRight, moveUp, moveDown, shoot, rotationX, rotationY, rotationZ, delta) {
-        this.moveForward = moveForward
-        this.moveBackward = moveBackward
-        this.moveLeft = moveLeft
-        this.moveRight = moveRight
-        this.moveUp = moveUp
-        this.moveDown = moveDown
+    constructor(x, y, z, shoot, rotationX, rotationY, rotationZ, delta) {
+        this.x = x
+        this.y = y
+        this.z = z
         this.shoot = shoot
         this.rotationX = rotationX
         this.rotationY = rotationY
@@ -17,12 +14,9 @@ class PlayerInput {
 }
 
 PlayerInput.protocol = {
-    moveForward : nengi.Boolean,
-    moveBackward : nengi.Boolean,
-    moveLeft : nengi.Boolean,
-    moveRight : nengi.Boolean,
-    moveUp : nengi.Boolean,
-    moveDown : nengi.Boolean,
+    x : nengi.Number,
+    y : nengi.Number,
+    z : nengi.Number,
     shoot : nengi.Boolean,
     rotationX : nengi.Number,
     rotationY : nengi.Number,
