@@ -250,19 +250,20 @@ class GameClient {
 	                threeCube.nid = entity.nid // may as well add this
 	                
 
-	                if(threeCube.nid != gameState.myId ){
-	                	threeCube.position.x = x
-		                threeCube.position.y = y
-		                threeCube.position.z = z
+                
+                	threeCube.position.x = x
+	                threeCube.position.y = y
+	                threeCube.position.z = z
 
-		               
-		                threeCube.rotation.x = rotationX
-		                threeCube.rotation.y = rotationY
-		                threeCube.rotation.z = rotationZ
-	                    scene.add(threeCube)
-
-	                    entities.set(nid, threeCube)
-	                }
+	               
+	                threeCube.rotation.x = rotationX
+	                threeCube.rotation.y = rotationY
+	                threeCube.rotation.z = rotationZ
+                    if(threeCube.nid != gameState.myId ){
+                       scene.add(threeCube)
+                    }
+                    entities.set(nid, threeCube)
+	                
 	            }
 
 	            if(entity.protocol.name === "Ship"){
@@ -374,9 +375,59 @@ class GameClient {
             })
         })
 
-        network.predictionErrors.forEach(predictionErrorFrame => {
-            console.log('prediction error frame', predictionErrorFrame)
-        })
+        // network.predictionErrors.forEach(predictionErrorFrame => {
+        //     // a prediction was incorrect, time to reconcile it
+        //     console.log('prediction error frame', predictionErrorFrame)
+        //     predictionErrorFrame.entities.forEach(predictionErrorEntity => {
+        //         // get our clientside entity
+                
+
+        //         // revert its relevant state to the state from the prediction frame
+                
+        //         const serverEntity = entities.get(gameState.myId)
+        //         camera.position.x = serverEntity.obj.position.x
+        //         camera.position.y = serverEntity.obj.position.y
+        //         camera.position.z = serverEntity.obj.position.z
+        //         move(camera, command)
+
+
+        //         // entity.velocity.x = predictionErrorEntity.proxy.velocity.x
+        //         // entity.velocity.y = predictionErrorEntity.proxy.velocity.y
+        //         // entity.velocity.z = predictionErrorEntity.proxy.velocity.z
+
+
+        //         // correct any prediction errors with server values...
+                
+
+        //         // and then re-apply any commands issued since the frame that had the prediction error
+        //         // const commandSets = network.getUnconfirmedCommands()
+        //         // commandSets.forEach((commandSet, clientTick) => {
+        //         //     commandSet.forEach(command => {
+        //         //         if (command.protocol.name === 'PlayerInput') {
+        //         //         const predictCamera = camera
+
+        //         //         move(camera, command)
+        //         //         const globalPosition = new THREE.Vector3();
+        //         //         predictCamera.getWorldPosition(globalPosition)
+
+                        
+
+        //         //         const prediction = {
+        //         //             nid: gameState.myId,
+        //         //             // x: globalPosition.x,
+        //         //             // y: globalPosition.y,
+        //         //             // z: globalPosition.z,
+        //         //             localPositionX: predictCamera.position.x,
+        //         //             localPositionY: predictCamera.position.y,
+        //         //             localPositionZ: predictCamera.position.z,
+        //         //         }
+                        
+        //         //         gameClient.client.addCustomPrediction(gameClient.client.tick, prediction, ['localPositionX', 'localPositionX', 'localPositionX'])
+        //         //         }
+        //         //     })
+        //         // })
+        //     })
+        // })
 
         network.messages.forEach(message => {
             if(message.protocol.name === "NetLog"){
@@ -717,25 +768,54 @@ function animate(){
         // if ( controls.isLocked === true ) {
 
             // console.log(camera.rotation.x)
+            const movement = new THREE.Object3D()
 
-            const command = new PlayerInput(moveForward, moveBackward, moveLeft, moveRight, moveUp, moveDown, shoot, camera.rotation.x, camera.rotation.y, camera.rotation.z, delta)
+            
+
+            movement.rotation.x = camera.rotation.x
+            movement.rotation.y = camera.rotation.y
+            movement.rotation.z = camera.rotation.z
+
+
+            camera.direction.z = Number( moveForward ) - Number( moveBackward );
+            camera.direction.x = Number( moveRight ) - Number( moveLeft );
+            camera.direction.y = Number( moveUp ) - Number(moveDown);
+            camera.direction.normalize(); // this ensures consistent movements in all directions
+        
+            movement.translateX(camera.direction.x * 40 * delta)
+            movement.translateY(camera.direction.y * 40 * delta)
+            movement.translateZ(-camera.direction.z * 40 * delta)
+
+            camera.position.x += movement.position.x
+            camera.position.y += movement.position.y
+            camera.position.z += movement.position.z
+
+            const command = new PlayerInput(camera.position.x, camera.position.y, camera.position.z, shoot, camera.rotation.x, camera.rotation.y, camera.rotation.z, delta)
 
             gameClient.client.addCommand(command)
             // const intersections = raycaster.intersectObjects( objects );
 
             // const onObject = intersections.length > 0;
 
-            const predictCamera = camera
-
-            move(camera, command)
-            const prediction = {
-                nid: gameState.myId,
-                x: predictCamera.position.x,
-                y: predictCamera.position.y,
-                z: predictCamera.position.z
-            }
             
-            gameClient.client.addCustomPrediction(gameClient.client.tick, prediction, ['x', 'y', 'z'])
+
+            // move(camera, command)
+            // const globalPosition = new THREE.Vector3();
+            // predictCamera.getWorldPosition(globalPosition)
+
+            
+
+            // const prediction = {
+            //     nid: gameState.myId,
+            //     // x: globalPosition.x,
+            //     // y: globalPosition.y,
+            //     // z: globalPosition.z,
+            //     localPositionX: predictCamera.position.x,
+            //     localPositionY: predictCamera.position.y,
+            //     localPositionZ: predictCamera.position.z,
+            // }
+            
+            // gameClient.client.addCustomPrediction(gameClient.client.tick, prediction, ['localPositionX', 'localPositionX', 'localPositionX'])
 
 
 
@@ -858,7 +938,7 @@ function exitSpace() {
             nearestShip = ship.nid;
         }
     })
-    ships.get(nearestShip).add(camera)
+    ships.get(nearestShip).attach(camera)
 }
 
 function move(entity, command){
