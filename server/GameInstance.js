@@ -95,24 +95,11 @@ class GameInstance {
                         // console.log(command.protocol.name)
                     // }
                     if(command.protocol.name === "PlayerInput"){
-                        if (command.moveForward) {
-                            entity.moveForward = true
-                        } else { entity.moveForward = false }
-                        if (command.moveBackward) {
-                            entity.moveBackward = true
-                        } else {entity.moveBackward = false}
-                        if (command.moveLeft) {
-                            entity.moveLeft = true
-                        } else {entity.moveLeft = false}
-                        if (command.moveRight) {
-                            entity.moveRight = true
-                        } else {entity.moveRight = false}
-                        if (command.moveUp) {
-                            entity.moveUp = true
-                        } else {entity.moveUp = false}
-                        if (command.moveDown) {
-                            entity.moveDown = true
-                        } else {entity.moveDown = false}
+                        // if(entity.position.x != undefined)
+                        entity.obj.position.x = command.x
+                        entity.obj.position.y = command.y
+                        entity.obj.position.z = command.z
+
                         if (command.shoot) {
                             entity.shoot = true
                         } else {entity.shoot = false}
@@ -166,7 +153,7 @@ class GameInstance {
                                     nearestShip = ship.nid;
                                 }
                             })
-                            ships.get(nearestShip).obj.add(entity.obj)
+                            ships.get(nearestShip).obj.attach(entity.obj)
                             // console.log(ships.get(nearestShip))
                             
                         }
