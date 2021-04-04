@@ -888,17 +888,17 @@ function animate(){
             }
 
             if(rollLeft === true){
-                if(space === false){
-                    floor.rotateZ(0.1)
-                }
+                // if(space === false){
+                //     floor.rotateZ(0.1)
+                // }
                 if(space === true){
                     camera.rotateZ(0.1)
                 }
             }
             if(rollRight === true){
-                if(space === false){
-                    floor.rotateZ(-0.1)
-                }
+                // if(space === false){
+                //     floor.rotateZ(-0.1)
+                // }
                 if(space === true){
                     camera.rotateZ(-0.1)
                 }
@@ -939,6 +939,10 @@ function exitSpace() {
         }
     })
     ships.get(nearestShip).attach(camera)
+    camera.rotation.x = 0
+    // camera.rotation.y = 0
+    camera.rotation.z = 0
+
 }
 
 function move(entity, command){
