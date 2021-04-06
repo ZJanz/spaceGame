@@ -3,6 +3,7 @@
 import * as THREE from 'three/build/three.module.js'
 // import { PointerLockControls } from './PointerLockControls.js';
 // import { FlyControls } from './FlyControls.js';
+import { OBB } from 'three/examples/jsm/math/OBB.js'
 
 import nengi from 'nengi'
 import nengiConfig from '../common/nengiConfig'
@@ -82,7 +83,7 @@ var PointerLockControls = function ( camera, domElement ) {
 
 
         euler.setFromQuaternion( camera.quaternion );
-        // console.log(movementX + ", " + movementY)
+        // (movementX + ", " + movementY)
         if(space === false) {
             euler.y -= movementX * 0.002;
             euler.x -= movementY * 0.002;
@@ -261,14 +262,15 @@ class GameClient {
 	                threeCube.rotation.z = rotationZ
                     if(threeCube.nid != gameState.myId ){
                        scene.add(threeCube)
-                    }
+                       
+                    } 
+                    
                     entities.set(nid, threeCube)
 	                
 	            }
 
 	            if(entity.protocol.name === "Ship"){
-	            	console.log(entity)
-	                const threeCube = new THREE.Mesh(
+	            		                const threeCube = new THREE.Mesh(
 	                    new THREE.BoxGeometry(entity.obb.halfSize.x * 2, entity.obb.halfSize.y*2, entity.obb.halfSize.z*2),
 	                    
 	                    new THREE.MeshBasicMaterial( {color: 0xff00ff} )
@@ -284,6 +286,10 @@ class GameClient {
 	                threeCube.rotation.x = rotationX
 	                threeCube.rotation.y = rotationY
 	                threeCube.rotation.z = rotationZ
+                    threeCube.obb = new OBB(threeCube.position, entity.obb.halfSize);
+                    threeCube.updateMatrix()
+                    threeCube.updateMatrixWorld()
+                    threeCube.obb.applyMatrix4(threeCube.matrix)
                     scene.add(threeCube)
                     ships.set(nid, threeCube)
                     
@@ -325,6 +331,16 @@ class GameClient {
                 // console.log(updat)
                 if (update.nid === gameState.myId){
                     scene.remove(entities.get(gameState.myId))
+                    
+                    
+                    // const size = new THREE.Vector3( 0.5, 0.5, 0.5 );
+                    // console.log(entities.get(gameState.myId))
+                    // gameState.myHitBox.set(entities.get(gameState.myId).position, size)
+                    // entities.get(gameState.myId).updateMatrix()
+                    // entities.get(gameState.myId).updateMatrixWorld()
+                    // console.log(entities.get(gameState.myId))
+                    // gameState.myHitBox.applyMatrix4(entities.get(gameState.myId).matrixWorld)
+                    
                     return
                 }
 
@@ -359,6 +375,14 @@ class GameClient {
                     entity.rotation.z = update.value
                 }
 
+                
+                if( entity.name != undefined && entity.name === 'Ship'){
+
+                    entity.obb.set(entity.obj.position, entity.obb.halfSize);
+                    entity.obj.updateMatrix()
+                    entity.obj.updateMatrixWorld()
+                    entity.obb.applyMatrix4(entity.obj.matrix)
+                }
 
  
             })
@@ -487,7 +511,19 @@ class GameClient {
 const gameState = {
     myId: null,
     myEntity: null,
+    onShip: undefined,
+    myHitBox: new OBB(),
+    myHalfSize: new THREE.Vector3( 1, 1, 1 ),
+    player: {
+        obb : new OBB(),
+
+        //use camera instead of obj
+        obj : new THREE.Object3D(),
+    }
+
 }
+
+gameState.player.obb.halfSize = new THREE.Vector3(2, 2, 2)
 
     const velocity = new THREE.Vector3();
     const direction = new THREE.Vector3();
@@ -776,19 +812,57 @@ function animate(){
             movement.rotation.y = camera.rotation.y
             movement.rotation.z = camera.rotation.z
 
+            if(space === true){
+                camera.direction.z = (Number( moveForward ) - Number( moveBackward )) * delta;
+                camera.direction.x = (Number( moveRight ) - Number( moveLeft )) * delta;
+                camera.direction.y = (Number( moveUp ) - Number(moveDown)) * delta;
+                camera.direction.normalize(); // this ensures consistent movements in all directions
+                movement.translateX(camera.direction.x * 40 * delta)
+                movement.translateY(camera.direction.y * 40 * delta)
+                movement.translateZ(-camera.direction.z * 40 * delta)
 
-            camera.direction.z = Number( moveForward ) - Number( moveBackward );
-            camera.direction.x = Number( moveRight ) - Number( moveLeft );
-            camera.direction.y = Number( moveUp ) - Number(moveDown);
-            camera.direction.normalize(); // this ensures consistent movements in all directions
-        
-            movement.translateX(camera.direction.x * 40 * delta)
-            movement.translateY(camera.direction.y * 40 * delta)
-            movement.translateZ(-camera.direction.z * 40 * delta)
+                camera.position.x += movement.position.x
+                camera.position.y += movement.position.y
+                camera.position.z += movement.position.z
 
-            camera.position.x += movement.position.x
-            camera.position.y += movement.position.y
-            camera.position.z += movement.position.z
+                
+            } else {
+                velocity.y -= 0.5 * 100.0 * delta;
+
+                controls.moveForward((Number( moveForward ) - Number( moveBackward )) * delta * 40);
+                controls.moveRight((Number( moveRight ) - Number( moveLeft )) * delta * 40);
+                camera.updateMatrix();
+                camera.updateMatrixWorld();
+                gameState.player.obb.center = camera.position
+
+
+
+                // gameState.player.obb.applyMatrix4(camera.matrixWorld)
+
+
+                let landed = false
+                ships.forEach(ship => { 
+                    
+                    if((camera.position.y < 5 && Math.abs(camera.position.x) < 10 && Math.abs(camera.position.z) < 10 ) || ship.obb.intersectsOBB(gameState.player.obb, 1)){
+                        landed = true
+                        
+                    }
+                })
+
+                if (landed === false){
+                    controls.getObject().position.y += ( velocity.y * delta )
+                    
+
+                } else {
+                    velocity.y = 0
+                }
+            }
+            
+
+
+
+
+            
 
             const command = new PlayerInput(camera.position.x, camera.position.y, camera.position.z, shoot, camera.rotation.x, camera.rotation.y, camera.rotation.z, delta)
 
@@ -939,9 +1013,18 @@ function exitSpace() {
         }
     })
     ships.get(nearestShip).attach(camera)
+    
+
+    console.log(camera)
+
+
     camera.rotation.x = 0
     // camera.rotation.y = 0
     camera.rotation.z = 0
+    // camera.updateMatrix();
+    // camera.updateMatrixWorld();
+    gameState.onShip = nearestShip
+    // console.log(ships.get(gameState.onShip))
 
 }
 
@@ -991,6 +1074,8 @@ function move(entity, command){
         entity.position.x += movement.position.x
         entity.position.y += movement.position.y
         entity.position.z += movement.position.z
+
+        // gameState.myHitBox = new OBB(threeCube.position, halfSize, threeCube.rotation);
 
 
 }
