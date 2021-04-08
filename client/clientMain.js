@@ -12,11 +12,6 @@ import PlayerInput from '../common/command/PlayerInput'
 import SpaceControl from '../common/command/SpaceControl'
 
 
-import {
-    Euler,
-    EventDispatcher,
-    Vector3
-} from 'three/build/three.module.js';
 
 
 // window.onload = function() {
@@ -66,11 +61,11 @@ var PointerLockControls = function ( camera, domElement ) {
     var lockEvent = { type: 'lock' };
     var unlockEvent = { type: 'unlock' };
 
-    var euler = new Euler( 0, 0, 0, 'YXZ' );
+    var euler = new THREE.Euler( 0, 0, 0, 'YXZ' );
 
     var PI_2 = Math.PI / 2;
 
-    var vec = new Vector3();
+    var vec = new THREE.Vector3();
 
     function onMouseMove( event ) {
 
@@ -159,7 +154,7 @@ var PointerLockControls = function ( camera, domElement ) {
 
     this.getDirection = function () {
 
-        var direction = new Vector3( 0, 0, - 1 );
+        var direction = new THREE.Vector3( 0, 0, - 1 );
 
         return function ( v ) {
 
@@ -206,7 +201,7 @@ var PointerLockControls = function ( camera, domElement ) {
 
 };
 
-PointerLockControls.prototype = Object.create( EventDispatcher.prototype );
+PointerLockControls.prototype = Object.create( THREE.EventDispatcher.prototype );
 PointerLockControls.prototype.constructor = PointerLockControls;
 
 
@@ -519,7 +514,10 @@ const gameState = {
 
         //use camera instead of obj
         obj : new THREE.Object3D(),
-    }
+    },
+    ghostShip: new THREE.Group(),
+    ghostPlayer: new OBB(),
+    shipFloor : new OBB(),
 
 }
 
@@ -761,16 +759,14 @@ function init(){
     floor = new THREE.Mesh(geometry2,material);
     floor.position.y = -10
     scene.add(floor)
-    // floor.add(camera)
-
-    // floor.position.y = -10;
-    // floor.add(camera)
-
     
+    // Building Ship Hitboxes
+    scene.add(gameState.ghostShip)
+    gameState.ghostPlayer = new OBB(new THREE.Vector3(), new THREE.Vector3(1, 1, 1))
+    gameState.ghostShip.add(gameState.ghostPlayer)
+    gameState.shipFloor = new OBB(new THREE.Vector3(), new THREE.Vector3(5, 1, 5))
+    gameState.ghostShip.add(gameState.shipFloor)
 
-
-    // camera.position.z = 5;
-    // camera.position.y = 10;
 
 
 
@@ -843,7 +839,9 @@ function animate(){
                 let landed = false
                 ships.forEach(ship => { 
                     
-                    if((camera.position.y < 5 && Math.abs(camera.position.x) < 10 && Math.abs(camera.position.z) < 10 ) || ship.obb.intersectsOBB(gameState.player.obb, 1)){
+                    if(
+                        // (camera.position.y < 5 && Math.abs(camera.position.x) < 10 && Math.abs(camera.position.z) < 10 ) || 
+                        gameState.shipFloor.intersectsOBB(gameState.ghostPlayer, 1)){
                         landed = true
                         
                     }
@@ -1013,9 +1011,14 @@ function exitSpace() {
         }
     })
     ships.get(nearestShip).attach(camera)
+
+
+
+    gameState.ghostPlayer.center = camera.position
+    
+    
     
 
-    console.log(camera)
 
 
     camera.rotation.x = 0
