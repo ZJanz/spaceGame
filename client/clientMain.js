@@ -286,7 +286,25 @@ class GameClient {
                     threeCube.updateMatrixWorld()
                     threeCube.obb.applyMatrix4(threeCube.matrix)
                     scene.add(threeCube)
-                    ships.set(nid, threeCube)
+
+                    const shipWall = new THREE.Mesh(
+                        new THREE.BoxGeometry(0, 20, 20),
+                        
+                        new THREE.MeshBasicMaterial( {color: 0xff00ff} )
+                    )
+                    shipWall.position.x = 10
+                    shipWall.position.y = 10
+                    shipWall.position.z = 0
+
+                    //add a way to access shipWall
+                    threeCube.add(shipWall)
+
+                    const shipObject = {
+                        obj : threeCube,
+                        nid: threeCube.nid,
+                    }
+
+                    ships.set(nid, shipObject)
                     
                     entities.set(nid, threeCube)
 	            }
@@ -518,8 +536,11 @@ const gameState = {
     ghostShip: new THREE.Group(),
     ghostPlayer: new OBB(),
     shipFloor : new OBB(),
+    shipParts : new Map(),
 
 }
+
+gameState.shipParts.set('leftWall', new OBB(new THREE.Vector3(10, 10, 0), new THREE.Vector3(0, 10, 10)))
 
 gameState.player.obb.halfSize = new THREE.Vector3(2, 2, 2)
 
@@ -764,7 +785,7 @@ function init(){
     scene.add(gameState.ghostShip)
     gameState.ghostPlayer = new OBB(new THREE.Vector3(), new THREE.Vector3(1, 1, 1))
     gameState.ghostShip.add(gameState.ghostPlayer)
-    gameState.shipFloor = new OBB(new THREE.Vector3(), new THREE.Vector3(5, 1, 5))
+    gameState.shipFloor = new OBB(new THREE.Vector3(), new THREE.Vector3(10, 1, 10))
     gameState.ghostShip.add(gameState.shipFloor)
 
 
@@ -825,27 +846,37 @@ function animate(){
             } else {
                 velocity.y -= 0.5 * 100.0 * delta;
 
-                controls.moveForward((Number( moveForward ) - Number( moveBackward )) * delta * 40);
-                controls.moveRight((Number( moveRight ) - Number( moveLeft )) * delta * 40);
-                camera.updateMatrix();
-                camera.updateMatrixWorld();
-                gameState.player.obb.center = camera.position
+
+                //editting this right now
+                // if(gameState.shipFloor.intersectsOBB(gameState.ghostPlayer, 1) === false){
+
+
+                    controls.moveForward((Number( moveForward ) - Number( moveBackward )) * delta * 40);
+                    if(gameState.shipParts.get('leftWall').intersectsOBB(gameState.ghostPlayer, 1) === true){
+                        controls.moveForward((-Number( moveForward ) + Number( moveBackward )) * delta * 40);
+                    }
+                    controls.moveRight((Number( moveRight ) - Number( moveLeft )) * delta * 40);
+                    if(gameState.shipParts.get('leftWall').intersectsOBB(gameState.ghostPlayer, 1) === true){
+                        controls.moveRight((-Number( moveRight ) + Number( moveLeft )) * delta * 40);
+                    }
+                    camera.updateMatrix();
+                    camera.updateMatrixWorld();
+                    gameState.player.obb.center = camera.position
+                // }
 
 
 
-                // gameState.player.obb.applyMatrix4(camera.matrixWorld)
 
 
                 let landed = false
-                ships.forEach(ship => { 
+                
                     
                     if(
-                        // (camera.position.y < 5 && Math.abs(camera.position.x) < 10 && Math.abs(camera.position.z) < 10 ) || 
                         gameState.shipFloor.intersectsOBB(gameState.ghostPlayer, 1)){
                         landed = true
                         
                     }
-                })
+                
 
                 if (landed === false){
                     controls.getObject().position.y += ( velocity.y * delta )
@@ -1004,13 +1035,14 @@ function exitSpace() {
     let nearestShip;
     
     ships.forEach(ship => { 
-        const distanceToShip = camera.position.distanceTo(ship.position)
+        console.log(ship)
+        const distanceToShip = camera.position.distanceTo(ship.obj.position)
         if(distanceToShip < shortestDistance){
             shortestDistance = distanceToShip;
             nearestShip = ship.nid;
         }
     })
-    ships.get(nearestShip).attach(camera)
+    ships.get(nearestShip).obj.attach(camera)
 
 
 
